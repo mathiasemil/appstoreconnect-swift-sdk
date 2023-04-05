@@ -132,6 +132,7 @@ public final class APIProvider {
     /// The JSON encoder used to encode request parameters.
     private let encoder: JSONEncoder
     
+    /// The rate limit information from the latest request
     public private(set) var latestRateLimit: RateLimit?
 
     /// Creates a new APIProvider instance which can be used to perform API Requests to the App Store Connect API.
