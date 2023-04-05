@@ -8,7 +8,10 @@
 import Foundation
 
 public struct RateLimit {
+    /// Number of requests you can make per hour with the same API key.
     public let hourlyLimit: Int
+    
+    /// Number of requests remaining. The time frame is a "rolling hour."
     public let remainingInCurrentHour: Int
     
     init?(value: String) {
