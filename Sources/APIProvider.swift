@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 import Crypto
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -132,8 +133,8 @@ public final class APIProvider {
     /// The JSON encoder used to encode request parameters.
     private let encoder: JSONEncoder
     
-    /// The rate limit information from the latest request
-    public private(set) var rateLimit: RateLimit?
+    /// The rate limit information from the latest API request
+    public let rateLimitPublisher = PassthroughSubject<RateLimit, Never>()
 
     /// Creates a new APIProvider instance which can be used to perform API Requests to the App Store Connect API.
     ///
@@ -234,7 +235,9 @@ private extension APIProvider {
     func mapResponse<T: Decodable>(_ result: Result<Response<Data>, Swift.Error>) -> Result<T, Swift.Error> {
         switch result {
         case .success(let response):
-            self.rateLimit = response.rateLimit
+            if let rateLimit = response.rateLimit {
+                rateLimitPublisher.send(rateLimit)
+            }
             
             guard let data = response.data, 200..<300 ~= response.statusCode else {
                 return .failure(Error.requestFailure(response.statusCode, response.errorResponse, response.requestURL))
@@ -262,7 +265,9 @@ private extension APIProvider {
     func mapVoidResponse(_ result: Result<Response<Data>, Swift.Error>) -> Result<Void, Swift.Error> {
         switch result {
         case .success(let response):
-            self.rateLimit = response.rateLimit
+            if let rateLimit = response.rateLimit {
+                rateLimitPublisher.send(rateLimit)
+            }
             
             guard 200..<300 ~= response.statusCode else {
                 return .failure(Error.requestFailure(response.statusCode, response.errorResponse, response.requestURL))
@@ -281,7 +286,9 @@ private extension APIProvider {
     func mapResponse(_ result: Result<Response<URL>, Swift.Error>) -> Result<URL, Swift.Error> {
         switch result {
         case .success(let response):
-            self.rateLimit = response.rateLimit
+            if let rateLimit = response.rateLimit {
+                rateLimitPublisher.send(rateLimit)
+            }
             
             guard 200..<300 ~= response.statusCode else {
                 return .failure(Error.requestFailure(response.statusCode, response.errorResponse, response.requestURL))
